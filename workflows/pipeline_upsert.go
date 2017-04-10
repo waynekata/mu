@@ -54,6 +54,12 @@ func (workflow *pipelineWorkflow) pipelineBucket(stackUpserter common.StackUpser
 	}
 }
 
+func optionalParam(params map[string]string, key string, value string) {
+	if value != "" {
+		params[key] = value
+	}
+}
+
 func (workflow *pipelineWorkflow) pipelineUpserter(tokenProvider func(bool) string, stackUpserter common.StackUpserter, stackWaiter common.StackWaiter) Executor {
 	return func() error {
 		pipelineStackName := common.CreateStackName(common.StackTypePipeline, workflow.serviceName)
@@ -73,43 +79,16 @@ func (workflow *pipelineWorkflow) pipelineUpserter(tokenProvider func(bool) stri
 			pipelineParams["GitHubToken"] = tokenProvider(pipelineStack == nil)
 		}
 
-		if workflow.pipelineConfig.Source.Branch != "" {
-			pipelineParams["SourceBranch"] = workflow.pipelineConfig.Source.Branch
-		}
-
-		if workflow.pipelineConfig.Build.Type != "" {
-			pipelineParams["BuildType"] = workflow.pipelineConfig.Build.Type
-		}
-		if workflow.pipelineConfig.Build.ComputeType != "" {
-			pipelineParams["BuildComputeType"] = workflow.pipelineConfig.Build.ComputeType
-		}
-
-		if workflow.pipelineConfig.Build.Image != "" {
-			pipelineParams["BuildImage"] = workflow.pipelineConfig.Build.Image
-		}
-
-		if workflow.pipelineConfig.Acceptance.Type != "" {
-			pipelineParams["TestType"] = workflow.pipelineConfig.Acceptance.Type
-		}
-		if workflow.pipelineConfig.Acceptance.ComputeType != "" {
-			pipelineParams["TestComputeType"] = workflow.pipelineConfig.Acceptance.ComputeType
-		}
-
-		if workflow.pipelineConfig.Acceptance.Image != "" {
-			pipelineParams["TestImage"] = workflow.pipelineConfig.Acceptance.Image
-		}
-
-		if workflow.pipelineConfig.Acceptance.Environment != "" {
-			pipelineParams["TestEnv"] = workflow.pipelineConfig.Acceptance.Environment
-		}
-
-		if workflow.pipelineConfig.Production.Environment != "" {
-			pipelineParams["ProdEnv"] = workflow.pipelineConfig.Production.Environment
-		}
-
-		if workflow.pipelineConfig.MuBaseurl != "" {
-			pipelineParams["MuDownloadBaseurl"] = workflow.pipelineConfig.MuBaseurl
-		}
+		optionalParam(pipelineParams, "SourceBranch", workflow.pipelineConfig.Source.Branch)
+		optionalParam(pipelineParams, "BuildType", workflow.pipelineConfig.Build.Type)
+		optionalParam(pipelineParams, "BuildComputeType", workflow.pipelineConfig.Build.ComputeType)
+		optionalParam(pipelineParams, "BuildImage", workflow.pipelineConfig.Build.Image)
+		optionalParam(pipelineParams, "TestType", workflow.pipelineConfig.Acceptance.Type)
+		optionalParam(pipelineParams, "TestComputeType", workflow.pipelineConfig.Acceptance.ComputeType)
+		optionalParam(pipelineParams, "TestImage", workflow.pipelineConfig.Acceptance.Image)
+		optionalParam(pipelineParams, "TestEnv", workflow.pipelineConfig.Acceptance.Environment)
+		optionalParam(pipelineParams, "ProdEnv", workflow.pipelineConfig.Production.Environment)
+		optionalParam(pipelineParams, "MuDownloadBaseurl", workflow.pipelineConfig.MuBaseurl)
 
 		// get default buildspec
 		buildspec, err := templates.NewTemplate("buildspec.yml", nil, nil)

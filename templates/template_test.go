@@ -80,6 +80,7 @@ Resources:
 
 	finalMap := make(map[interface{}]interface{})
 	err = yaml.Unmarshal(templateBodyBytes.Bytes(), finalMap)
+	assert.Nil(err)
 	assert.Equal("mu-bucket-${BucketPrefix}", nestedMap(finalMap, "Outputs", "Bucket", "Export", "Name")["Fn::Sub"])
 }
 

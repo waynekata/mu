@@ -33,7 +33,7 @@ func TestLogsManager_ViewLogs(t *testing.T) {
 						Message: aws.String("hello world"),
 					},
 					{
-						Message: aws.String("hello agains"),
+						Message: aws.String("hello again"),
 					},
 				},
 			}, true)

@@ -467,6 +467,5 @@ func writeTemplateAndConfig(cfnDirectory string, stackName string, templateBodyB
 		return err
 	}
 	configFile := fmt.Sprintf("%s/config-%s.json", cfnDirectory, stackName)
-	err = ioutil.WriteFile(configFile, configBody, 0600)
-	return nil
+	return ioutil.WriteFile(configFile, configBody, 0600)
 }
