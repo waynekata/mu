@@ -1,315 +1,318 @@
 package common
 
 import (
-	"fmt"
-	"io"
-	"time"
+  "fmt"
+  "io"
+  "time"
 )
 
 // Context defines the context object passed around
 type Context struct {
-	Config               Config
-	StackManager         StackManager
-	ClusterManager       ClusterManager
-	InstanceManager      InstanceManager
-	ElbManager           ElbManager
-	RdsManager           RdsManager
-	ParamManager         ParamManager
-	LocalPipelineManager PipelineManager // instance that ignores region/profile/role
-	PipelineManager      PipelineManager
-	LogsManager          LogsManager
-	DockerManager        DockerManager
-	DockerOut            io.Writer
-	TaskManager          TaskManager
-	ArtifactManager      ArtifactManager
-	SubscriptionManager  SubscriptionManager
-	RolesetManager       RolesetManager
-	ExtensionsManager    ExtensionsManager
+  Config               Config
+  StackManager         StackManager
+  ClusterManager       ClusterManager
+  InstanceManager      InstanceManager
+  ElbManager           ElbManager
+  RdsManager           RdsManager
+  ParamManager         ParamManager
+  LocalPipelineManager PipelineManager // instance that ignores region/profile/role
+  PipelineManager      PipelineManager
+  LogsManager          LogsManager
+  DockerManager        DockerManager
+  DockerOut            io.Writer
+  TaskManager          TaskManager
+  ArtifactManager      ArtifactManager
+  SubscriptionManager  SubscriptionManager
+  RolesetManager       RolesetManager
+  ExtensionsManager    ExtensionsManager
 }
 
 // Config defines the structure of the yml file for the mu config
 type Config struct {
-	Namespace    string        `yaml:"namespace,omitempty" validate:"validateAlphaNumericDash"`
-	Environments []Environment `yaml:"environments,omitempty"`
-	Service      Service       `yaml:"service,omitempty"`
-	Basedir      string        `yaml:"-"`
-	RelMuFile    string        `yaml:"-"`
-	Repo         struct {
-		Name     string
-		Slug     string
-		Revision string
-		Branch   string
-		Provider string
-	} `yaml:"-"`
-	Templates  map[string]interface{}       `yaml:"templates,omitempty"`
-	Parameters map[string]map[string]string `yaml:"parameters,omitempty"`
-	Tags       map[string]map[string]string `yaml:"tags,omitempty"`
-	Extensions []Extension                  `yaml:"extensions,omitempty"`
-	DisableIAM bool                         `yaml:"disableIAM,omitempty"`
-	Roles      struct {
-		CloudFormation string `yaml:"cloudFormation,omitempty" validate:"validateRoleARN"`
-	} `yaml:"roles,omitempty"`
+  Namespace    string        `yaml:"namespace,omitempty" validate:"validateAlphaNumericDash"`
+  Environments []Environment `yaml:"environments,omitempty"`
+  Service      Service       `yaml:"service,omitempty"`
+  Basedir      string        `yaml:"-"`
+  RelMuFile    string        `yaml:"-"`
+  Repo         struct {
+    Name     string
+    Slug     string
+    Revision string
+    Branch   string
+    Provider string
+  } `yaml:"-"`
+  Templates  map[string]interface{}       `yaml:"templates,omitempty"`
+  Parameters map[string]map[string]string `yaml:"parameters,omitempty"`
+  Tags       map[string]map[string]string `yaml:"tags,omitempty"`
+  Extensions []Extension                  `yaml:"extensions,omitempty"`
+  DisableIAM bool                         `yaml:"disableIAM,omitempty"`
+  Roles      struct {
+    CloudFormation string `yaml:"cloudFormation,omitempty" validate:"validateRoleARN"`
+  } `yaml:"roles,omitempty"`
 }
 
 // Extension defines the structure of the yml file for an extension
 type Extension struct {
-	URL   string `yaml:"url,omitempty"`
-	Image string `yaml:"image,omitempty"`
+  URL   string `yaml:"url,omitempty"`
+  Image string `yaml:"image,omitempty"`
 }
 
 // Environment defines the structure of the yml file for an environment
 type Environment struct {
-	Name         string       `yaml:"name,omitempty" validate:"validateLeadingAlphaNumericDash"`
-	Provider     EnvProvider  `yaml:"provider,omitempty"`
-	Loadbalancer Loadbalancer `yaml:"loadbalancer,omitempty"`
-	Cluster      Cluster      `yaml:"cluster,omitempty"`
-	Discovery    struct {
-		Provider string `yaml:"provider,omitempty"`
-		Name     string `yaml:"name,omitempty"`
-	} `yaml:"discovery,omitempty"`
-	VpcTarget VpcTarget        `yaml:"vpcTarget,omitempty"`
-	Roles     EnvironmentRoles `yaml:"roles,omitempty"`
+  Name         string       `yaml:"name,omitempty" validate:"validateLeadingAlphaNumericDash"`
+  Provider     EnvProvider  `yaml:"provider,omitempty"`
+  Loadbalancer Loadbalancer `yaml:"loadbalancer,omitempty"`
+  Cluster      Cluster      `yaml:"cluster,omitempty"`
+  Discovery    struct {
+    Provider string `yaml:"provider,omitempty"`
+    Name     string `yaml:"name,omitempty"`
+  } `yaml:"discovery,omitempty"`
+  VpcTarget VpcTarget        `yaml:"vpcTarget,omitempty"`
+  Roles     EnvironmentRoles `yaml:"roles,omitempty"`
 }
 
 // Loadbalancer defines the scructure of the yml file for a loadbalancer
 type Loadbalancer struct {
-	HostedZone  string `yaml:"hostedzone,omitempty" validate:"validateURL"`
-	Name        string `yaml:"name,omitempty"  validate:"validateLeadingAlphaNumericDash=32"`
-	Certificate string `yaml:"certificate,omitempty"`
-	Internal    bool   `yaml:"internal,omitempty"`
+  HostedZone  string `yaml:"hostedzone,omitempty" validate:"validateURL"`
+  Name        string `yaml:"name,omitempty"  validate:"validateLeadingAlphaNumericDash=32"`
+  Certificate string `yaml:"certificate,omitempty"`
+  Internal    bool   `yaml:"internal,omitempty"`
 }
 
 // Cluster defines the scructure of the yml file for a cluster of EC2 instance AWS::AutoScaling::LaunchConfiguration
 type Cluster struct {
-	InstanceType            string          `yaml:"instanceType,omitempty" validate:"validateInstanceType"`
-	ImageID                 string          `yaml:"imageId,omitempty" validate:"validateResourceID=ami"`
-	ImageOsType             string          `yaml:"osType,omitempty"`
-	InstanceTenancy         InstanceTenancy `yaml:"instanceTenancy,omitempty"`
-	DesiredCapacity         int             `yaml:"desiredCapacity,omitempty"`
-	MinSize                 int             `yaml:"minSize,omitempty"`
-	MaxSize                 int             `yaml:"maxSize,omitempty"`
-	KeyName                 string          `yaml:"keyName,omitempty"`
-	SSHAllow                string          `yaml:"sshAllow,omitempty" validate:"validateCIDR"`
-	TargetCPUReservation    int             `yaml:"targetCPUReservation,omitempty" validate:"max=100"`
-	TargetMemoryReservation int             `yaml:"targetMemoryReservation,omitempty" validate:"max=100"`
-	HTTPProxy               string          `yaml:"httpProxy,omitempty"  validate:"validateURL"`
-	ExtraUserData           string          `yaml:"extraUserData,omitempty"`
+  InstanceType            string          `yaml:"instanceType,omitempty" validate:"validateInstanceType"`
+  ImageID                 string          `yaml:"imageId,omitempty" validate:"validateResourceID=ami"`
+  ImageOsType             string          `yaml:"osType,omitempty"`
+  InstanceTenancy         InstanceTenancy `yaml:"instanceTenancy,omitempty"`
+  DesiredCapacity         int             `yaml:"desiredCapacity,omitempty"`
+  MinSize                 int             `yaml:"minSize,omitempty"`
+  MaxSize                 int             `yaml:"maxSize,omitempty"`
+  KeyName                 string          `yaml:"keyName,omitempty"`
+  SSHAllow                string          `yaml:"sshAllow,omitempty" validate:"validateCIDR"`
+  TargetCPUReservation    int             `yaml:"targetCPUReservation,omitempty" validate:"max=100"`
+  TargetMemoryReservation int             `yaml:"targetMemoryReservation,omitempty" validate:"max=100"`
+  HTTPProxy               string          `yaml:"httpProxy,omitempty"  validate:"validateURL"`
+  ExtraUserData           string          `yaml:"extraUserData,omitempty"`
 }
 
 // VpcTarget defines the structure of the yml file for a cluster VPC
 type VpcTarget struct {
-	VpcID             string   `yaml:"vpcId,omitempty" validate:"validateResourceID=vpc"`
-	InstanceSubnetIds []string `yaml:"instanceSubnetIds,omitempty" validate:"validateResourceID=subnet"`
-	ElbSubnetIds      []string `yaml:"elbSubnetIds,omitempty" validate:"validateResourceID=subnet"`
-	Environment       string   `yaml:"environment" validate:"validateLeadingAlphaNumericDash"`
-	Namespace         string   `yaml:"namespace" validate:"validateLeadingAlphaNumericDash"`
+  VpcID             string   `yaml:"vpcId,omitempty" validate:"validateResourceID=vpc"`
+  InstanceSubnetIds []string `yaml:"instanceSubnetIds,omitempty" validate:"validateResourceID=subnet"`
+  ElbSubnetIds      []string `yaml:"elbSubnetIds,omitempty" validate:"validateResourceID=subnet"`
+  Environment       string   `yaml:"environment" validate:"validateLeadingAlphaNumericDash"`
+  Namespace         string   `yaml:"namespace" validate:"validateLeadingAlphaNumericDash"`
 }
 
 // EnvironmentRoles defines the structure of the yml file for environment roles
 type EnvironmentRoles struct {
-	EcsInstance string `yaml:"ecsInstance,omitempty" validate:"validateRoleARN"`
+  EcsInstance string `yaml:"ecsInstance,omitempty" validate:"validateRoleARN"`
 }
 
 // Service defines the structure of the yml file for a service
 type Service struct {
-	Name                 string                 `yaml:"name,omitempty" validate:"validateLeadingAlphaNumericDash"`
-	DeploymentStrategy   DeploymentStrategy     `yaml:"deploymentStrategy,omitempty"`
-	DesiredCount         int                    `yaml:"desiredCount,omitempty"`
-	MinSize              int                    `yaml:"minSize,omitempty"`
-	MaxSize              int                    `yaml:"maxSize,omitempty"`
-	Dockerfile           string                 `yaml:"dockerfile,omitempty"`
-	ImageRepository      string                 `yaml:"imageRepository,omitempty"`
-	Port                 int                    `yaml:"port,omitempty" validate:"max=65535"`
-	Protocol             ServiceProtocol        `yaml:"protocol,omitempty"`
-	HealthEndpoint       string                 `yaml:"healthEndpoint,omitempty" validate:"validateURL"`
-	CPU                  int                    `yaml:"cpu,omitempty"`
-	Memory               int                    `yaml:"memory,omitempty"`
-	NetworkMode          NetworkMode            `yaml:"networkMode,omitempty"`
-	Links                []string               `yaml:"links,omitempty"`
-	Environment          map[string]interface{} `yaml:"environment,omitempty"`
-	PathPatterns         []string               `yaml:"pathPatterns,omitempty"`
-	HostPatterns         []string               `yaml:"hostPatterns,omitempty"`
-	Priority             int                    `yaml:"priority,omitempty" validate:"max=50000"`
-	Pipeline             Pipeline               `yaml:"pipeline,omitempty"`
-	Database             Database               `yaml:"database,omitempty"`
-	Schedule             []Schedule             `yaml:"schedules,omitempty"`
-	TargetCPUUtilization int                    `yaml:"targetCPUUtilization,omitempty" validate:"max=100"`
-	DiscoveryTTL         string                 `yaml:"discoveryTTL,omitempty"`
-	Roles                struct {
-		Ec2Instance            string `yaml:"ec2Instance,omitempty" validate:"validateRoleARN"`
-		CodeDeploy             string `yaml:"codeDeploy,omitempty" validate:"validateRoleARN"`
-		EcsEvents              string `yaml:"ecsEvents,omitempty" validate:"validateRoleARN"`
-		EcsService             string `yaml:"ecsService,omitempty" validate:"validateRoleARN"`
-		EcsTask                string `yaml:"ecsTask,omitempty" validate:"validateRoleARN"`
-		ApplicationAutoScaling string `yaml:"applicationAutoScaling,omitempty" validate:"validateRoleARN"`
-	} `yaml:"roles,omitempty"`
+  Name                 string                 `yaml:"name,omitempty" validate:"validateLeadingAlphaNumericDash"`
+  DeploymentStrategy   DeploymentStrategy     `yaml:"deploymentStrategy,omitempty"`
+  DesiredCount         int                    `yaml:"desiredCount,omitempty"`
+  MinSize              int                    `yaml:"minSize,omitempty"`
+  MaxSize              int                    `yaml:"maxSize,omitempty"`
+  Dockerfile           string                 `yaml:"dockerfile,omitempty"`
+  ImageRepository      string                 `yaml:"imageRepository,omitempty"`
+  Port                 int                    `yaml:"port,omitempty" validate:"max=65535"`
+  Protocol             ServiceProtocol        `yaml:"protocol,omitempty"`
+  HealthEndpoint       string                 `yaml:"healthEndpoint,omitempty" validate:"validateURL"`
+  CPU                  int                    `yaml:"cpu,omitempty"`
+  Memory               int                    `yaml:"memory,omitempty"`
+  NetworkMode          NetworkMode            `yaml:"networkMode,omitempty"`
+  Links                []string               `yaml:"links,omitempty"`
+  Environment          map[string]interface{} `yaml:"environment,omitempty"`
+  PathPatterns         []string               `yaml:"pathPatterns,omitempty"`
+  HostPatterns         []string               `yaml:"hostPatterns,omitempty"`
+  Priority             int                    `yaml:"priority,omitempty" validate:"max=50000"`
+  Pipeline             Pipeline               `yaml:"pipeline,omitempty"`
+  Database             Database               `yaml:"database,omitempty"`
+  Schedule             []Schedule             `yaml:"schedules,omitempty"`
+  TargetCPUUtilization int                    `yaml:"targetCPUUtilization,omitempty" validate:"max=100"`
+  DiscoveryTTL         string                 `yaml:"discoveryTTL,omitempty"`
+  Roles                struct {
+    Ec2Instance            string `yaml:"ec2Instance,omitempty" validate:"validateRoleARN"`
+    CodeDeploy             string `yaml:"codeDeploy,omitempty" validate:"validateRoleARN"`
+    EcsEvents              string `yaml:"ecsEvents,omitempty" validate:"validateRoleARN"`
+    EcsService             string `yaml:"ecsService,omitempty" validate:"validateRoleARN"`
+    EcsTask                string `yaml:"ecsTask,omitempty" validate:"validateRoleARN"`
+    ApplicationAutoScaling string `yaml:"applicationAutoScaling,omitempty" validate:"validateRoleARN"`
+  } `yaml:"roles,omitempty"`
 }
 
 // Database definition
 type Database struct {
-	DatabaseConfig    `yaml:",inline"`
-	EnvironmentConfig map[string]DatabaseConfig `yaml:"environmentConfig"`
+  DatabaseConfig    `yaml:",inline"`
+  EnvironmentConfig map[string]DatabaseConfig `yaml:"environmentConfig"`
 }
 
 // DatabaseConfig definition
 type DatabaseConfig struct {
-	Name                  string `yaml:"name,omitempty" validate:"validateLeadingAlphaNumericDash"`
-	InstanceClass         string `yaml:"instanceClass,omitempty" validate:"validateInstanceType"`
-	Engine                string `yaml:"engine,omitempty" validate:"validateAlphaNumericDash"`
-	EngineMode            string `yaml:"engineMode,omitempty" validate:"validateAlphaNumericDash"`
-	IamAuthentication     string `yaml:"iamAuthentication,omitempty"`
-	MasterUsername        string `yaml:"masterUsername,omitempty"`
-	AllocatedStorage      string `yaml:"allocatedStorage,omitempty"`
-	KmsKey                string `yaml:"kmsKey,omitempty"`
-	MinSize               string `yaml:"minSize,omitempty"`
-	MaxSize               string `yaml:"maxSize,omitempty"`
-	SecondsUntilAutoPause string `yaml:"secondsUntilAutoPause,omitempty"`
+  Name                  string `yaml:"name,omitempty" validate:"validateLeadingAlphaNumericDash"`
+  InstanceClass         string `yaml:"instanceClass,omitempty" validate:"validateInstanceType"`
+  Engine                string `yaml:"engine,omitempty" validate:"validateAlphaNumericDash"`
+  EngineMode            string `yaml:"engineMode,omitempty" validate:"validateAlphaNumericDash"`
+  IamAuthentication     string `yaml:"iamAuthentication,omitempty"`
+  MasterUsername        string `yaml:"masterUsername,omitempty"`
+  AllocatedStorage      string `yaml:"allocatedStorage,omitempty"`
+  KmsKey                string `yaml:"kmsKey,omitempty"`
+  MinSize               string `yaml:"minSize,omitempty"`
+  MaxSize               string `yaml:"maxSize,omitempty"`
+  SecondsUntilAutoPause string `yaml:"secondsUntilAutoPause,omitempty"`
 }
 
 // GetDatabaseConfig definition
 func (database *Database) GetDatabaseConfig(environmentName string) *DatabaseConfig {
-	first := func(options ...string) string {
-		for _, s := range options {
-			if s != "" {
-				return s
-			}
-		}
-		return ""
-	}
-	envConfig := database.EnvironmentConfig[environmentName]
-	dbConfig := &DatabaseConfig{
-		Name:                  first(envConfig.Name, database.Name),
-		InstanceClass:         first(envConfig.InstanceClass, database.InstanceClass),
-		Engine:                first(envConfig.Engine, database.Engine),
-		EngineMode:            first(envConfig.EngineMode, database.EngineMode),
-		IamAuthentication:     first(envConfig.IamAuthentication, database.IamAuthentication),
-		MasterUsername:        first(envConfig.MasterUsername, database.MasterUsername),
-		AllocatedStorage:      first(envConfig.AllocatedStorage, database.AllocatedStorage),
-		KmsKey:                first(envConfig.KmsKey, database.KmsKey),
-		MinSize:               first(envConfig.MinSize, database.MinSize),
-		MaxSize:               first(envConfig.MaxSize, database.MaxSize),
-		SecondsUntilAutoPause: first(envConfig.SecondsUntilAutoPause, database.SecondsUntilAutoPause),
-	}
-	return dbConfig
+  first := func(options ...string) string {
+    for _, s := range options {
+      if s != "" {
+        return s
+      }
+    }
+    return ""
+  }
+  envConfig := database.EnvironmentConfig[environmentName]
+  dbConfig := &DatabaseConfig{
+    Name:                  first(envConfig.Name, database.Name),
+    InstanceClass:         first(envConfig.InstanceClass, database.InstanceClass),
+    Engine:                first(envConfig.Engine, database.Engine),
+    EngineMode:            first(envConfig.EngineMode, database.EngineMode),
+    IamAuthentication:     first(envConfig.IamAuthentication, database.IamAuthentication),
+    MasterUsername:        first(envConfig.MasterUsername, database.MasterUsername),
+    AllocatedStorage:      first(envConfig.AllocatedStorage, database.AllocatedStorage),
+    KmsKey:                first(envConfig.KmsKey, database.KmsKey),
+    MinSize:               first(envConfig.MinSize, database.MinSize),
+    MaxSize:               first(envConfig.MaxSize, database.MaxSize),
+    SecondsUntilAutoPause: first(envConfig.SecondsUntilAutoPause, database.SecondsUntilAutoPause),
+  }
+  return dbConfig
 }
 
 // Schedule definition
 type Schedule struct {
-	Name       string   `yaml:"name,omitempty" validate:"validateLeadingAlphaNumericDash"`
-	Expression string   `yaml:"expression,omitempty"`
-	Command    []string `yaml:"command,omitempty"`
+  Name       string   `yaml:"name,omitempty" validate:"validateLeadingAlphaNumericDash"`
+  Expression string   `yaml:"expression,omitempty"`
+  Command    []string `yaml:"command,omitempty"`
 }
 
 // Pipeline definition
 type Pipeline struct {
-	Source struct {
-		Provider string `yaml:"provider,omitempty"`
-		Repo     string `yaml:"repo,omitempty"`
-		Branch   string `yaml:"branch,omitempty"`
-	} `yaml:"source,omitempty"`
-	Build struct {
-		Disabled     bool            `yaml:"disabled,omitempty"`
-		Type         EnvironmentType `yaml:"type,omitempty"`
-		ComputeType  ComputeType     `yaml:"computeType,omitempty"`
-		Image        string          `yaml:"image,omitempty" validate:"validateDockerImage"`
-		Bucket       string          `yaml:"bucket,omitempty"`
-		BuildTimeout string          `yaml:"timeout,omitempty" validate:"max=480"`
-	} `yaml:"build,omitempty"`
-	Acceptance struct {
-		Disabled    bool            `yaml:"disabled,omitempty"`
-		Environment string          `yaml:"environment,omitempty"`
-		Type        EnvironmentType `yaml:"type,omitempty"`
-		ComputeType ComputeType     `yaml:"computeType,omitempty"`
-		Image       string          `yaml:"image,omitempty" validate:"validateDockerImage"`
-		Roles       struct {
-			CodeBuild string `yaml:"codeBuild,omitempty" validate:"validateRoleARN"`
-			Mu        string `yaml:"mu,omitempty" validate:"validateRoleARN"`
-		} `yaml:"roles,omitempty"`
-		BuildTimeout string `yaml:"timeout,omitempty" validate:"max=480"`
-	} `yaml:"acceptance,omitempty"`
-	Production struct {
-		Disabled    bool   `yaml:"disabled,omitempty"`
-		Environment string `yaml:"environment,omitempty"`
-		Roles       struct {
-			CodeBuild string `yaml:"codeBuild,omitempty" validate:"validateRoleARN"`
-			Mu        string `yaml:"mu,omitempty" validate:"validateRoleARN"`
-		} `yaml:"roles,omitempty"`
-		BuildTimeout string `yaml:"timeout,omitempty" validate:"max=480"`
-	} `yaml:"production,omitempty"`
-	MuBaseurl string `yaml:"muBaseurl,omitempty"`
-	MuVersion string `yaml:"muVersion,omitempty"`
-	KmsKey    string `yaml:"kmsKey,omitempty"`
-	Roles     struct {
-		Pipeline string `yaml:"pipeline,omitempty" validate:"validateRoleARN"`
-		Build    string `yaml:"build,omitempty" validate:"validateRoleARN"`
-	} `yaml:"roles,omitempty"`
-	Bucket string   `yaml:"bucket,omitempty"`
-	Notify []string `yaml:"notify,omitempty"`
+  Source struct {
+    Provider string `yaml:"provider,omitempty"`
+    Repo     string `yaml:"repo,omitempty"`
+    Branch   string `yaml:"branch,omitempty"`
+  } `yaml:"source,omitempty"`
+  Build struct {
+    Disabled     bool            `yaml:"disabled,omitempty"`
+    Type         EnvironmentType `yaml:"type,omitempty"`
+    ComputeType  ComputeType     `yaml:"computeType,omitempty"`
+    Image        string          `yaml:"image,omitempty" validate:"validateDockerImage"`
+    Bucket       string          `yaml:"bucket,omitempty"`
+    BuildTimeout string          `yaml:"timeout,omitempty" validate:"max=480"`
+  } `yaml:"build,omitempty"`
+  Acceptance struct {
+    Disabled    bool            `yaml:"disabled,omitempty"`
+    Environment string          `yaml:"environment,omitempty"`
+    Type        EnvironmentType `yaml:"type,omitempty"`
+    ComputeType ComputeType     `yaml:"computeType,omitempty"`
+    Image       string          `yaml:"image,omitempty" validate:"validateDockerImage"`
+    Roles       struct {
+      CodeBuild string `yaml:"codeBuild,omitempty" validate:"validateRoleARN"`
+      Mu        string `yaml:"mu,omitempty" validate:"validateRoleARN"`
+    } `yaml:"roles,omitempty"`
+    BuildTimeout string `yaml:"timeout,omitempty" validate:"max=480"`
+  } `yaml:"acceptance,omitempty"`
+  Production struct {
+    Disabled    bool   `yaml:"disabled,omitempty"`
+    Environment string `yaml:"environment,omitempty"`
+    Actions     struct {
+       ManualApproval bool `yaml:"manualapproval,omitempty"`
+    } `yaml:"actions,omitempty"`
+    Roles       struct {
+      CodeBuild string `yaml:"codeBuild,omitempty" validate:"validateRoleARN"`
+      Mu        string `yaml:"mu,omitempty" validate:"validateRoleARN"`
+    } `yaml:"roles,omitempty"`
+    BuildTimeout string `yaml:"timeout,omitempty" validate:"max=480"`
+  } `yaml:"production,omitempty"`
+  MuBaseurl string `yaml:"muBaseurl,omitempty"`
+  MuVersion string `yaml:"muVersion,omitempty"`
+  KmsKey    string `yaml:"kmsKey,omitempty"`
+  Roles     struct {
+    Pipeline string `yaml:"pipeline,omitempty" validate:"validateRoleARN"`
+    Build    string `yaml:"build,omitempty" validate:"validateRoleARN"`
+  } `yaml:"roles,omitempty"`
+  Bucket string   `yaml:"bucket,omitempty"`
+  Notify []string `yaml:"notify,omitempty"`
 }
 
 // Stack summary
 type Stack struct {
-	ID             string
-	Name           string
-	Status         string
-	StatusReason   string
-	LastUpdateTime time.Time
-	Tags           map[string]string
-	Outputs        map[string]string
-	Parameters     map[string]string
+  ID             string
+  Name           string
+  Status         string
+  StatusReason   string
+  LastUpdateTime time.Time
+  Tags           map[string]string
+  Outputs        map[string]string
+  Parameters     map[string]string
 }
 
 const (
-	// StackStatusCreateInProgress is a StackStatus enum value
-	StackStatusCreateInProgress = "CREATE_IN_PROGRESS"
+  // StackStatusCreateInProgress is a StackStatus enum value
+  StackStatusCreateInProgress = "CREATE_IN_PROGRESS"
 
-	// StackStatusCreateFailed is a StackStatus enum value
-	StackStatusCreateFailed = "CREATE_FAILED"
+  // StackStatusCreateFailed is a StackStatus enum value
+  StackStatusCreateFailed = "CREATE_FAILED"
 
-	// StackStatusCreateComplete is a StackStatus enum value
-	StackStatusCreateComplete = "CREATE_COMPLETE"
+  // StackStatusCreateComplete is a StackStatus enum value
+  StackStatusCreateComplete = "CREATE_COMPLETE"
 
-	// StackStatusRollbackInProgress is a StackStatus enum value
-	StackStatusRollbackInProgress = "ROLLBACK_IN_PROGRESS"
+  // StackStatusRollbackInProgress is a StackStatus enum value
+  StackStatusRollbackInProgress = "ROLLBACK_IN_PROGRESS"
 
-	// StackStatusRollbackFailed is a StackStatus enum value
-	StackStatusRollbackFailed = "ROLLBACK_FAILED"
+  // StackStatusRollbackFailed is a StackStatus enum value
+  StackStatusRollbackFailed = "ROLLBACK_FAILED"
 
-	// StackStatusRollbackComplete is a StackStatus enum value
-	StackStatusRollbackComplete = "ROLLBACK_COMPLETE"
+  // StackStatusRollbackComplete is a StackStatus enum value
+  StackStatusRollbackComplete = "ROLLBACK_COMPLETE"
 
-	// StackStatusDeleteInProgress is a StackStatus enum value
-	StackStatusDeleteInProgress = "DELETE_IN_PROGRESS"
+  // StackStatusDeleteInProgress is a StackStatus enum value
+  StackStatusDeleteInProgress = "DELETE_IN_PROGRESS"
 
-	// StackStatusDeleteFailed is a StackStatus enum value
-	StackStatusDeleteFailed = "DELETE_FAILED"
+  // StackStatusDeleteFailed is a StackStatus enum value
+  StackStatusDeleteFailed = "DELETE_FAILED"
 
-	// StackStatusDeleteComplete is a StackStatus enum value
-	StackStatusDeleteComplete = "DELETE_COMPLETE"
+  // StackStatusDeleteComplete is a StackStatus enum value
+  StackStatusDeleteComplete = "DELETE_COMPLETE"
 
-	// StackStatusUpdateInProgress is a StackStatus enum value
-	StackStatusUpdateInProgress = "UPDATE_IN_PROGRESS"
+  // StackStatusUpdateInProgress is a StackStatus enum value
+  StackStatusUpdateInProgress = "UPDATE_IN_PROGRESS"
 
-	// StackStatusUpdateCompleteCleanupInProgress is a StackStatus enum value
-	StackStatusUpdateCompleteCleanupInProgress = "UPDATE_COMPLETE_CLEANUP_IN_PROGRESS"
+  // StackStatusUpdateCompleteCleanupInProgress is a StackStatus enum value
+  StackStatusUpdateCompleteCleanupInProgress = "UPDATE_COMPLETE_CLEANUP_IN_PROGRESS"
 
-	// StackStatusUpdateComplete is a StackStatus enum value
-	StackStatusUpdateComplete = "UPDATE_COMPLETE"
+  // StackStatusUpdateComplete is a StackStatus enum value
+  StackStatusUpdateComplete = "UPDATE_COMPLETE"
 
-	// StackStatusUpdateRollbackInProgress is a StackStatus enum value
-	StackStatusUpdateRollbackInProgress = "UPDATE_ROLLBACK_IN_PROGRESS"
+  // StackStatusUpdateRollbackInProgress is a StackStatus enum value
+  StackStatusUpdateRollbackInProgress = "UPDATE_ROLLBACK_IN_PROGRESS"
 
-	// StackStatusUpdateRollbackFailed is a StackStatus enum value
-	StackStatusUpdateRollbackFailed = "UPDATE_ROLLBACK_FAILED"
+  // StackStatusUpdateRollbackFailed is a StackStatus enum value
+  StackStatusUpdateRollbackFailed = "UPDATE_ROLLBACK_FAILED"
 
-	// StackStatusUpdateRollbackCompleteCleanupInProgress is a StackStatus enum value
-	StackStatusUpdateRollbackCompleteCleanupInProgress = "UPDATE_ROLLBACK_COMPLETE_CLEANUP_IN_PROGRESS"
+  // StackStatusUpdateRollbackCompleteCleanupInProgress is a StackStatus enum value
+  StackStatusUpdateRollbackCompleteCleanupInProgress = "UPDATE_ROLLBACK_COMPLETE_CLEANUP_IN_PROGRESS"
 
-	// StackStatusUpdateRollbackComplete is a StackStatus enum value
-	StackStatusUpdateRollbackComplete = "UPDATE_ROLLBACK_COMPLETE"
+  // StackStatusUpdateRollbackComplete is a StackStatus enum value
+  StackStatusUpdateRollbackComplete = "UPDATE_ROLLBACK_COMPLETE"
 
-	// StackStatusReviewInProgress is a StackStatus enum value
-	StackStatusReviewInProgress = "REVIEW_IN_PROGRESS"
+  // StackStatusReviewInProgress is a StackStatus enum value
+  StackStatusReviewInProgress = "REVIEW_IN_PROGRESS"
 )
 
 // StackType describes supported stack types
@@ -317,41 +320,41 @@ type StackType string
 
 // List of valid stack types
 const (
-	StackTypeVpc          StackType = "vpc"
-	StackTypeTarget                 = "target"
-	StackTypeIam                    = "iam"
-	StackTypeEnv                    = "environment"
-	StackTypeLoadBalancer           = "loadbalancer"
-	StackTypeRepo                   = "repo"
-	StackTypeApp                    = "app"
-	StackTypeService                = "service"
-	StackTypePipeline               = "pipeline"
-	StackTypeDatabase               = "database"
-	StackTypeSchedule               = "schedule"
-	StackTypeBucket                 = "bucket"
+  StackTypeVpc          StackType = "vpc"
+  StackTypeTarget                 = "target"
+  StackTypeIam                    = "iam"
+  StackTypeEnv                    = "environment"
+  StackTypeLoadBalancer           = "loadbalancer"
+  StackTypeRepo                   = "repo"
+  StackTypeApp                    = "app"
+  StackTypeService                = "service"
+  StackTypePipeline               = "pipeline"
+  StackTypeDatabase               = "database"
+  StackTypeSchedule               = "schedule"
+  StackTypeBucket                 = "bucket"
 )
 
 // List of valid Policy files
 const (
-	TemplatePolicyDefault  string = "policies/default.json"
-	TemplatePolicyAllowAll        = "policies/allow-all.json"
-	TemplateApp                   = "app.yml"
-	TemplateBucket                = "bucket.yml"
-	TemplateBuildspec             = "buildspec.yml"
-	TemplateCommonIAM             = "common-iam.yml"
-	TemplateDatabase              = "database.yml"
-	TemplateELB                   = "elb.yml"
-	TemplateEnvEC2                = "env-ec2.yml"
-	TemplateEnvECS                = "env-ecs.yml"
-	TemplatePipelineIAM           = "pipeline-iam.yml"
-	TemplatePipeline              = "pipeline.yml"
-	TemplateRepo                  = "repo.yml"
-	TemplateSchedule              = "schedule.yml"
-	TemplateServiceEC2            = "service-ec2.yml"
-	TemplateServiceECS            = "service-ecs.yml"
-	TemplateServiceIAM            = "service-iam.yml"
-	TemplateVCPTarget             = "vpc-target.yml"
-	TemplateVPC                   = "vpc.yml"
+  TemplatePolicyDefault  string = "policies/default.json"
+  TemplatePolicyAllowAll        = "policies/allow-all.json"
+  TemplateApp                   = "app.yml"
+  TemplateBucket                = "bucket.yml"
+  TemplateBuildspec             = "buildspec.yml"
+  TemplateCommonIAM             = "common-iam.yml"
+  TemplateDatabase              = "database.yml"
+  TemplateELB                   = "elb.yml"
+  TemplateEnvEC2                = "env-ec2.yml"
+  TemplateEnvECS                = "env-ecs.yml"
+  TemplatePipelineIAM           = "pipeline-iam.yml"
+  TemplatePipeline              = "pipeline.yml"
+  TemplateRepo                  = "repo.yml"
+  TemplateSchedule              = "schedule.yml"
+  TemplateServiceEC2            = "service-ec2.yml"
+  TemplateServiceECS            = "service-ecs.yml"
+  TemplateServiceIAM            = "service-iam.yml"
+  TemplateVCPTarget             = "vpc-target.yml"
+  TemplateVPC                   = "vpc.yml"
 )
 
 // DeploymentStrategy describes supported deployment strategies
@@ -359,9 +362,9 @@ type DeploymentStrategy string
 
 // List of supported deployment strategies
 const (
-	BlueGreenDeploymentStrategy DeploymentStrategy = "blue_green"
-	RollingDeploymentStrategy                      = "rolling"
-	ReplaceDeploymentStrategy                      = "replace"
+  BlueGreenDeploymentStrategy DeploymentStrategy = "blue_green"
+  RollingDeploymentStrategy                      = "rolling"
+  ReplaceDeploymentStrategy                      = "replace"
 )
 
 // EnvProvider describes supported environment strategies
@@ -369,9 +372,9 @@ type EnvProvider string
 
 // List of valid environment strategies
 const (
-	EnvProviderEcs        EnvProvider = "ecs"
-	EnvProviderEcsFargate             = "ecs-fargate"
-	EnvProviderEc2                    = "ec2"
+  EnvProviderEcs        EnvProvider = "ecs"
+  EnvProviderEcsFargate             = "ecs-fargate"
+  EnvProviderEc2                    = "ec2"
 )
 
 // InstanceTenancy describes supported tenancy options for EC2
@@ -379,9 +382,9 @@ type InstanceTenancy string
 
 // List of valid tenancies
 const (
-	InstanceTenancyDedicated = "dedicated"
-	InstanceTenancyHost      = "host"
-	InstanceTenancyDefault   = "default"
+  InstanceTenancyDedicated = "dedicated"
+  InstanceTenancyHost      = "host"
+  InstanceTenancyDefault   = "default"
 )
 
 // ArtifactProvider describes supported artifact strategies
@@ -389,8 +392,8 @@ type ArtifactProvider string
 
 // List of valid artifact providers
 const (
-	ArtifactProviderEcr ArtifactProvider = "ecr"
-	ArtifactProviderS3                   = "s3"
+  ArtifactProviderEcr ArtifactProvider = "ecr"
+  ArtifactProviderS3                   = "s3"
 )
 
 // ServiceProtocol describes exposed ports for ECS service
@@ -398,8 +401,8 @@ type ServiceProtocol string
 
 // List of supported service protocols
 const (
-	ServiceProtocolHTTP  = "HTTP"
-	ServiceProtocolHTTPS = "HTTPS"
+  ServiceProtocolHTTP  = "HTTP"
+  ServiceProtocolHTTPS = "HTTPS"
 )
 
 // NetworkMode describes the ecs docker network mode
@@ -407,10 +410,10 @@ type NetworkMode string
 
 // List of supported network modes
 const (
-	NetworkModeNone   = "none"
-	NetworkModeBridge = "bridge"
-	NetworkModeAwsVpc = "awsvpc"
-	NetworkModeHost   = "host"
+  NetworkModeNone   = "none"
+  NetworkModeBridge = "bridge"
+  NetworkModeAwsVpc = "awsvpc"
+  NetworkModeHost   = "host"
 )
 
 // ComputeType describes the compute type of a codebuild project
@@ -418,9 +421,9 @@ type ComputeType string
 
 // List of supported compute types
 const (
-	ComputeTypeSmall  = "BUILD_GENERAL1_SMALL"
-	ComputeTypeMedium = "BUILD_GENERAL1_MEDIUM"
-	ComputeTypeLarge  = "BUILD_GENERAL1_LARGE"
+  ComputeTypeSmall  = "BUILD_GENERAL1_SMALL"
+  ComputeTypeMedium = "BUILD_GENERAL1_MEDIUM"
+  ComputeTypeLarge  = "BUILD_GENERAL1_LARGE"
 )
 
 // EnvironmentType describes the codebuild project environment type
@@ -428,76 +431,76 @@ type EnvironmentType string
 
 // List of supported environment types
 const (
-	EnvironmentTypeLinux   = "LINUX_CONTAINER"
-	EnvironmentTypeWindows = "WINDOWS_CONTAINER"
+  EnvironmentTypeLinux   = "LINUX_CONTAINER"
+  EnvironmentTypeWindows = "WINDOWS_CONTAINER"
 )
 
 // Container describes container details
 type Container struct {
-	Name     string
-	Instance string
+  Name     string
+  Instance string
 }
 
 // Task describes task definition
 type Task struct {
-	Name           string
-	Environment    string
-	Service        string
-	Status         string
-	TaskDefinition string
-	Cluster        string
-	Command        []string
-	Containers     []Container
+  Name           string
+  Environment    string
+  Service        string
+  Status         string
+  TaskDefinition string
+  Cluster        string
+  Command        []string
+  Containers     []Container
 }
 
 // JSONOutput common json definition
 type JSONOutput struct {
-	Values [1]struct {
-		Key   string `json:"key"`
-		Value string `json:"value"`
-	} `json:"values"`
+  Values [1]struct {
+    Key   string `json:"key"`
+    Value string `json:"value"`
+  } `json:"values"`
 }
 
 // Int64Value returns the value of the int64 pointer passed in or
 // 0 if the pointer is nil.
 func Int64Value(v *int64) int64 {
-	if v != nil {
-		return *v
-	}
-	return 0
+  if v != nil {
+    return *v
+  }
+  return 0
 }
 
 // StringValue returns the value of the string pointer passed in or
 // "" if the pointer is nil.
 func StringValue(v *string) string {
-	if v != nil {
-		return *v
-	}
-	return ""
+  if v != nil {
+    return *v
+  }
+  return ""
 }
 
 // BoolValue returns the value of the bool pointer passed in or
 // false if the pointer is nil.
 func BoolValue(v *bool) bool {
-	if v != nil {
-		return *v
-	}
-	return false
+  if v != nil {
+    return *v
+  }
+  return false
 }
 
 // TimeValue returns the value of the time.Time pointer passed in or
 // time.Time{} if the pointer is nil.
 func TimeValue(v *time.Time) time.Time {
-	if v != nil {
-		return *v
-	}
-	return time.Time{}
+  if v != nil {
+    return *v
+  }
+  return time.Time{}
 }
 
 // CPUMemory represents valid cpu/memory structure
 type CPUMemory struct {
-	CPU    int
-	Memory []int
+  CPU    int
+  Memory []int
 }
 
 // GB count of MB
@@ -505,28 +508,28 @@ var GB = 1024
 
 // CPUMemorySupport represents valid ECS combinations
 var CPUMemorySupport = []CPUMemory{
-	{CPU: 256, Memory: []int{512, 1 * GB, 2 * GB}},
-	{CPU: 512, Memory: []int{1 * GB, 2 * GB, 3 * GB, 4 * GB}},
-	{CPU: 1024, Memory: []int{2 * GB, 3 * GB, 4 * GB, 5 * GB, 6 * GB, 7 * GB, 8 * GB}},
-	{CPU: 2048, Memory: []int{4 * GB, 5 * GB, 6 * GB, 7 * GB, 8 * GB, 9 * GB, 10 * GB, 11 * GB, 12 * GB, 13 * GB, 14 * GB, 15 * GB, 16 * GB}},
-	{CPU: 4096, Memory: []int{8 * GB, 9 * GB, 10 * GB, 11 * GB, 12 * GB, 13 * GB, 14 * GB, 15 * GB, 16 * GB, 17 * GB, 18 * GB, 19 * GB, 20 * GB,
-		21 * GB, 22 * GB, 23 * GB, 24 * GB, 25 * GB, 26 * GB, 27 * GB, 28 * GB, 29 * GB, 30 * GB}},
+  {CPU: 256, Memory: []int{512, 1 * GB, 2 * GB}},
+  {CPU: 512, Memory: []int{1 * GB, 2 * GB, 3 * GB, 4 * GB}},
+  {CPU: 1024, Memory: []int{2 * GB, 3 * GB, 4 * GB, 5 * GB, 6 * GB, 7 * GB, 8 * GB}},
+  {CPU: 2048, Memory: []int{4 * GB, 5 * GB, 6 * GB, 7 * GB, 8 * GB, 9 * GB, 10 * GB, 11 * GB, 12 * GB, 13 * GB, 14 * GB, 15 * GB, 16 * GB}},
+  {CPU: 4096, Memory: []int{8 * GB, 9 * GB, 10 * GB, 11 * GB, 12 * GB, 13 * GB, 14 * GB, 15 * GB, 16 * GB, 17 * GB, 18 * GB, 19 * GB, 20 * GB,
+    21 * GB, 22 * GB, 23 * GB, 24 * GB, 25 * GB, 26 * GB, 27 * GB, 28 * GB, 29 * GB, 30 * GB}},
 }
 
 // Warning that implements `error` but safe to ignore
 type Warning struct {
-	Message string
+  Message string
 }
 
 // Error the contract for error
 func (w Warning) Error() string {
-	return w.Message
+  return w.Message
 }
 
 // Warningf create a warning
 func Warningf(format string, args ...interface{}) Warning {
-	w := Warning{
-		Message: fmt.Sprintf(format, args),
-	}
-	return w
+  w := Warning{
+    Message: fmt.Sprintf(format, args),
+  }
+  return w
 }
